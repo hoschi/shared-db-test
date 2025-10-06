@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 from src.core.middleware import SchemaRoutingMiddleware, schema_context
 
@@ -13,31 +13,41 @@ async def test_schema_routing_middleware():
     middleware = SchemaRoutingMiddleware(app)
 
     # Test with a schema provided in the header
-    request_with_schema = Mock()
-    request_with_schema.headers = {"X-Schema-Name": "test_schema"}
+    scope_with_schema = {
+        "type": "http",
+        "headers": [(b"x-schema-name", b"test_schema")],
+    }
+    receive = AsyncMock()
+    send = AsyncMock()
 
-    call_next = AsyncMock()
+    await middleware(scope_with_schema, receive, send)
 
-    await middleware(request_with_schema, call_next)
+    # The app should have been called with the correct context
+    app.assert_awaited_once()
 
-    # Check that the context was set correctly during the call
-    # The context is reset after the call, so we can't check it directly.
-    # Instead, we can check the value of the context variable inside the mock call
-
-    # To do this, we can make the call_next mock check the context
-    async def check_context(*args, **kwargs):
+    # To verify the context, we can check the context *during* the app call
+    async def app_with_check(scope, receive, send):
         assert schema_context.get() == "test_schema"
 
-    call_next.side_effect = check_context
-    await middleware(request_with_schema, call_next)
-
+    app.side_effect = app_with_check
+    await middleware(scope_with_schema, receive, send)
+    app.reset_mock() # Reset for the next test case
 
     # Test without a schema provided in the header (should default to 'public')
-    request_without_schema = Mock()
-    request_without_schema.headers = {}
+    scope_without_schema = {
+        "type": "http",
+        "headers": [],
+    }
 
-    async def check_default_context(*args, **kwargs):
+    async def app_with_default_check(scope, receive, send):
         assert schema_context.get() == "public"
 
-    call_next.side_effect = check_default_context
-    await middleware(request_without_schema, call_next)
+    app.side_effect = app_with_default_check
+    await middleware(scope_without_schema, receive, send)
+    app.assert_awaited_once()
+    app.reset_mock()
+
+    # Test with a non-http scope
+    scope_non_http = {"type": "websocket"}
+    await middleware(scope_non_http, receive, send)
+    app.assert_awaited_once_with(scope_non_http, receive, send)

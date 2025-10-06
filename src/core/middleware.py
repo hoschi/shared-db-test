@@ -1,7 +1,6 @@
 from contextvars import ContextVar
-from typing import Awaitable, Callable
+from starlette.types import ASGIApp, Receive, Scope, Send
 
-from fastapi import Request, Response
 
 # Context variable to hold the schema for the current request context.
 # The default value 'public' is used if no schema is specified.
@@ -14,23 +13,24 @@ class SchemaRoutingMiddleware:
     It inspects the `X-Schema-Name` header of incoming requests.
     """
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp):
         self.app = app
 
-    async def __call__(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """
         Processes the incoming request to set the schema context.
         """
-        # Get schema from the header. Fallback to 'public' if not present.
-        schema_name = request.headers.get("X-Schema-Name", "public")
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        # Set the schema name in the context variable for this request.
+        headers = scope.get("headers", [])
+        schema_name = "public"
+        for key, value in headers:
+            if key.decode("latin-1") == "x-schema-name":
+                schema_name = value.decode("latin-1")
+                break
+
         token = schema_context.set(schema_name)
-
-        # Process the request.
-        response = await call_next(request)
-
-        # Reset the context variable to its previous state.
+        await self.app(scope, receive, send)
         schema_context.reset(token)
-
-        return response
