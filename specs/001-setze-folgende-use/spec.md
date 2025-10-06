@@ -99,7 +99,7 @@ As a system administrator, I want to ensure that the database access system prov
 ### Edge Cases
 - When a deadlock occurs between transactions in different schemas, the system must detect it and automatically resolve it by terminating one of the conflicting transactions.
 - If a connection is lost during a long-running operation, the system must terminate the operation and roll back any partial changes to ensure data consistency.
-- What is the behavior when disk space is exhausted during an operation in one schema?
+- If disk space is exhausted during an operation, the system must terminate the operation and roll back any partial changes to prevent data corruption.
 
 ## Requirements *(mandatory)*
 
@@ -119,6 +119,7 @@ As a system administrator, I want to ensure that the database access system prov
 - **FR-013**: The system MUST automatically detect and resolve cross-schema deadlocks.
 - **FR-014**: The system MUST perform a full rollback of all changes in all involved schemas if a cross-schema transaction fails.
 - **FR-015**: The system MUST terminate long-running operations and roll back partial changes upon connection loss.
+- **FR-016**: The system MUST handle disk space exhaustion gracefully by terminating the operation and rolling back any partial changes.
 
 ### Non-Functional Requirements
 - **NFR-001**: The system MUST be instrumented to measure performance degradation during schema-switching operations.

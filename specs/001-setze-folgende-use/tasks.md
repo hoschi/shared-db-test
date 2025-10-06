@@ -91,9 +91,53 @@
 **Description**: Implement the performance tests for schema switching and concurrent load.
 **Dependencies**: T013
 
-## Phase 6: Documentation
+## Phase 5b: Specific Requirement Tests
 
-### T018: Update README
+### T018: Implement Object Name Resolution Test [P]
+**File**: `tests/integration/test_object_resolution.py`
+**Description**: Implement tests to verify that objects with the same name in different schemas are resolved correctly based on the `search_path` (FR-007).
+**Dependencies**: T013
+
+### T019: Implement Object Visibility Test [P]
+**File**: `tests/integration/test_object_visibility.py`
+**Description**: Implement tests to ensure that functions, views, and custom types are only visible and usable within their own schema (FR-009).
+**Dependencies**: T013
+
+### T020: Implement Temporary Object Scope Test [P]
+**File**: `tests/integration/test_temporary_objects.py`
+**Description**: Implement tests to verify that temporary objects are session-specific and schema-scoped (FR-011).
+**Dependencies**: T013
+
+### T021: Implement Deadlock Resolution Test [P]
+**File**: `tests/integration/test_deadlock_resolution.py`
+**Description**: Implement a test that intentionally creates a cross-schema deadlock to verify that the system automatically detects and resolves it (FR-013).
+**Dependencies**: T013
+
+### T022: Implement Full Rollback Test [P]
+**File**: `tests/integration/test_full_rollback.py`
+**Description**: Implement a test for a failing cross-schema transaction to verify that a full rollback occurs in all involved schemas (FR-014).
+**Dependencies**: T013
+
+### T023: Implement Connection Loss Test [P]
+**File**: `tests/integration/test_connection_loss.py`
+**Description**: Implement a test that simulates a connection loss during a long-running operation to verify the operation is terminated and rolled back (FR-015).
+**Dependencies**: T013
+
+### T024: Implement Disk Space Exhaustion Test [P]
+**File**: `tests/integration/test_disk_space.py`
+**Description**: Implement a test that simulates disk space exhaustion to verify the operation is terminated and rolled back gracefully (FR-016).
+**Dependencies**: T013
+
+## Phase 6: Non-Functional Requirements
+
+### T025: Implement Comprehensive Logging
+**File**: `src/core/logging_config.py`
+**Description**: Implement and configure structured logging using `Loguru` to ensure that schema-related errors include schema name, user context, and query details (NFR-002).
+**Dependencies**: T001
+
+## Phase 7: Documentation
+
+### T026: Update README
 **File**: `README.md`
 **Description**: Replace the content of the `README.md` file with a detailed description of how to set up the environment, run the tests, and what the expected outcome is, based on `quickstart.md`.
 
@@ -104,13 +148,4 @@ The following tasks can be executed in parallel after Phase 1 is complete:
 - **Models**: `T007` and `T008`
 - **Services**: `T009` and `T010` (after models are complete)
 - **API**: `T011` and `T012` (after services are complete)
-- **Testing**: `T014`, `T015`, `T016`, and `T017` (after the application code is complete)
-
-Example of running model tasks in parallel:
-```bash
-# Terminal 1
-# (Work on T007: src/notes_system/models.py)
-
-# Terminal 2
-# (Work on T008: src/video_analysis/models.py)
-```
+- **Testing**: `T014`, `T015`, `T016`, `T017`, and `T018`-`T024` (after the application code is complete)
