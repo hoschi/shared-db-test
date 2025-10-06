@@ -1,75 +1,91 @@
-# Shared DB Test
+# Hybrid Prefix-Schema Pattern Test Suite
 
-## Project Setup
+This project provides a comprehensive test suite for a database access system that uses a hybrid prefix-schema pattern to enforce schema isolation in a multi-tenant application. It is built with Python, FastAPI, and SQLAlchemy.
 
-### 1. Prerequisites
-- [Conda](https://docs.conda.io/en/latest/miniconda.html) for environment management.
-- [Poetry](https://python-poetry.org/docs/#installation) for package management.
-- [Poe the Poet](https://poethepoet.natn.io/installation.html) for task management.
+## Overview
 
-### 2. Installation
+The core of this project is a schema-aware database layer that allows a single FastAPI application to serve multiple tenants, each with its own isolated database schema. The test suite is designed to verify:
 
-```bash
-# Create and activate the conda environment
-conda env create --file conda.yml
-conda activate shared-db-test
+- **Schema Isolation**: Data created in one tenant's schema is not accessible from another.
+- **Data Integrity**: Foreign key relationships and other constraints are correctly enforced within each schema.
+- **Performance**: The overhead of schema switching is measured and baselined.
 
-# Install dependencies using Poetry
-poetry install
+## Getting Started
 
-# add git filter for Jupyter notebooks
-nbstripout --install
-```
+### Prerequisites
 
-## Daily Work
-
-### Running Quality Checks
-
-This project is equipped with a comprehensive set of quality gates. To run them all locally, use the following commands:
-
-```bash
-# Run linter and formatter check
-ruff check .
-ruff format --check .
-
-# Run static type checking
-mypy
-
-# Run tests and generate coverage reports
-pytest
-
-# Run all checks
-poe check-all
-```
-
-To view the interactive coverage report after running the tests, open `htmlcov/index.html` in your browser.
-
-### Interactive Documentation
-
-The `docs/` directory contains interactive Jupyter Notebooks. They are the best way to learn the core concepts and patterns used in this project.
-
-1.  **Open the project in VS Code.**
-2.  **Make sure you have the recommended extensions installed (VS Code will prompt you).**
-3.  **Select the project's Python interpreter: YOUR CONDA ENV.**
-4.  **Open `docs/01_core_concepts.ipynb` or `docs/02_advanced_patterns.ipynb`.**
-5.  **Run the code cells one by one to see the concepts in action.**
-
-Each code cell ends with `assert` statements, making the documentation self-verifying.
-
-## 🤖 Working with AI Assistants (Cursor, Gemini, etc.)
-
-This project is specifically optimized to work with modern AI coding assistants. To ensure high code quality, we have created a "manifest" for AIs.
+- Python 3.11+
+- Poetry for dependency management
 
 ### Setup
 
-Cursor and Gemini are already set up for you.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
 
-**For other tools:**
-Explicitly include the main directive in your prompt. Example:
+2.  **Install dependencies:**
+    ```bash
+    poetry install
+    ```
+
+### Running the Application
+
+To run the FastAPI application locally, use the following command:
+
 ```bash
-claude "Refactor the 'process_data' function in 'src/core/services.py'. Strictly follow the instructions from 'ai-assistants/01-main-directives.md'."
+poetry run uvicorn src.main:app --reload
 ```
 
-### The Rules
+The application will be available at `http://127.0.0.1:8000`.
 
-The `ai-assistants/` directory contains the complete set of rules. The AI is automatically referred to the relevant documents to ensure it always operates within the project's context.
+## Testing
+
+The test suite is designed to be run in a CI environment using GitHub Actions, but it can also be run locally with a running PostgreSQL instance.
+
+### CI Testing with GitHub Actions
+
+The primary method for running the test suite is through the GitHub Actions workflow defined in `.github/workflows/test.yml`. This workflow automatically:
+
+1.  Checks out the code.
+2.  Sets up a Python environment and installs dependencies.
+3.  Starts a PostgreSQL service container.
+4.  Runs the full `pytest` suite, including integration tests against the PostgreSQL service.
+5.  Reports test coverage, which must be at least 95%.
+
+The workflow is triggered on every `push` event.
+
+### Local Testing
+
+To run the tests locally, you must have a PostgreSQL instance running and configured with the following credentials:
+
+-   **User**: `user`
+-   **Password**: `password`
+-   **Database**: `testdb`
+-   **Host**: `localhost`
+-   **Port**: `5432`
+
+You can start a compatible PostgreSQL instance using the provided `docker-compose.yml` file:
+
+```bash
+docker compose up -d
+```
+
+Once the database is running, you can run the tests:
+
+**Run all tests:**
+
+```bash
+poetry run pytest
+```
+
+**Run only unit tests (no database required):**
+
+```bash
+poetry run pytest tests/unit
+```
+
+### Expected Outcome
+
+When the tests are run, `pytest` will output the status of each test. A successful run will show all tests passing, confirming that the schema isolation and other features are working as expected. The test coverage report will also be displayed, and it must meet the 95% threshold for the build to pass in the CI environment.
