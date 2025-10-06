@@ -1,0 +1,5 @@
+name: shared-db-test
+channels:
+  - defaults
+dependencies:
+  - python=3.12

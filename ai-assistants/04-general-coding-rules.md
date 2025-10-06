@@ -1,0 +1,39 @@
+# General Coding Rules
+
+- **Functional First:** Setze das Muster "functional core, imperative shell" um, details dazu findest du in `ai-assistants/05-fcis.md`. Schreibe reine Funktionen, wann immer möglich. Trenne Daten und Logik konsequent. Vermeide OOP-Klassen mit Methoden.
+    - **Datenstrukturen:**
+      - Nutze `@dataclass(frozen=True)` oder `Pydantic BaseModel` **NUR** für Daten
+      - Datenklassen dürfen **KEINE** Methoden enthalten (außer `__post_init__` für Validierung)
+      - Alle Felder müssen typ-annotiert und immutable sein
+    - **Verhalten:**
+      - Implementiere Logik als **freie Funktionen** außerhalb der Datenklassen
+      - Funktionen nehmen Datenstrukturen als Parameter entgegen
+      - Funktionen geben neue, unveränderliche Datenstrukturen zurück (keine In-Place-Mutation)
+      - Nutze `TypeVar` und Generics für wiederverwendbare Funktionen
+      - Pattern Matching mit `match`/`case` für unterschiedliches Verhalten basierend auf Datentypen, bei `mypy` Problemen mit Type Narrowing benutzen normale conditionals da diese besser funktionieren.
+    - **Verboten:**
+      - Klassen mit Methoden (außer Magic Methods wie `__str__`, `__eq__`)
+      - Vererbung von Klassen zur Code-Wiederverwendung
+      - Stateful Klassen mit `self`-Mutation
+      - Service-Klassen mit `__init__` und Instanzvariablen
+    - **Erlaubt (Ausnahmen):**
+      - `Pydantic` Validators und `Config` in Modellen (für Data Boundaries)
+      - Magic Methods für Python-Protokolle (`__str__`, `__repr__`, `__eq__`, `__hash__`)
+      - Properties für berechnete Read-Only Felder (sparsam verwenden)
+    - **Zustandsänderung:**
+      - Erzeuge neue Instanzen statt Objekte zu mutieren
+    - **Organisation:**
+      - Gruppiere verwandte Funktionen in Modulen (z.B. `user_operations.py`)
+      - Nutze Namespaces durch Module statt Klassen
+- **Polymorphismus:**
+  - Verwende `Protocol` für Interfaces statt Vererbung – **aber nur, wenn mehrere Implementierungen wirklich gebraucht werden** (z.B. für Test-Doubles, verschiedene Backends). Für einfache Services mit nur einer Implementierung bleibe beim "functional first"-Ansatz (freie Funktionen, reine Datenstrukturen). Das Protocol-Muster ist kein Selbstzweck und darf nicht für triviale Fälle verwendet werden.
+  - **Functional-First bleibt Standard:** Auch wenn das Protocol-Muster verwendet wird, gelten **alle Functional-First-Regeln** weiterhin: Daten und Logik müssen strikt getrennt bleiben, keine zustandsbehafteten Klassen, keine Methoden außer Magic Methods, keine In-Place-Mutation. Protocols dienen nur als Interface, nicht als Ausrede für OOP-Designs oder Service-Klassen mit Zustand!
+- **Strict Typing:** Jeder Code muss vollständig mit `MyPy` im `strict`-Modus validieren. Vermeide `Any`.
+- **Error Handling:** Verwende **IMMER** `returns` für Operationen, die fehlschlagen können. Wirf keine Exceptions für erwartbare Fehler.
+  - *Zweck & Beispiel:* Um sicherzustellen, dass alle Fehlerfälle im Typsystem abgebildet und behandelt werden müssen. Siehe die lauffähigen Beispiele in `docs/01_core_concepts.ipynb`.
+- **Data Boundaries:** Validiere **ALLE** externen Daten (API-Responses, DB-Queries, User-Input) mit `Pydantic`-Modellen an den Rändern der Anwendung. Verwende `Annotated` für detailierte Beschreibungen.
+  - *Zweck & Beispiel:* Um eine typsichere Domäne im Inneren der Anwendung zu garantieren. Siehe die Pydantic-Beispiele in `docs/01_core_concepts.ipynb`.
+- **Don't Repeat Yourself (DRY):** Vermeide Code-Duplizierung durch die Nutzung von wiederverwendbaren Service-Funktionen und Protokollen.
+  - *Zweck & Beispiel:* Um die Wartbarkeit zu erhöhen. Das `Fetcher`-Protocol in `docs/04_architecture_and_design.ipynb` ist ein Beispiel für eine wiederverwendbare Abstraktion.
+- Teste deinen Code mit dem Kommando `poe check-all` um sicher zu gehen das alles korrekt ist. Dieses Kommando formatiert den Code, führt die Type Checkes aus sowie die Tests.
+- Benutze `Loguru` wenn du logging brauchst um Fehler zu finden oder generell für debug logs die bei bedarf angeschaltet werden können. In `docs/01_core_concepts.ipynb` sind Beispiele zu finden für die Benutzung.

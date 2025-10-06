@@ -1,0 +1,8 @@
+.coverage
+.hypothesis/
+coverage.xml
+logs/
+__pycache__
+.coverage
+.vscode/
+.gemini/
